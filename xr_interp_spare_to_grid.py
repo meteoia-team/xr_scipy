@@ -237,6 +237,7 @@ def xr_idx_interp(ds_y_for_spline, lon, lat,p=2):
     :param lat:
     :return:
     """
+
     ds_y_for_spline = ds_y_for_spline.load()
     time= ds_y_for_spline.time
     print('interp idx')
@@ -248,22 +249,22 @@ def xr_idx_interp(ds_y_for_spline, lon, lat,p=2):
     Lon = Lon.ravel()
     Lat = Lat.ravel()
     def interp_idw(dd,Lon,Lat, out_shape,lat,lon,p):
-        try:
-            dd = dd[1].dropna('sta_id', how='all')
-            ds_interp = Inverse_weighted_interpolation(dd.lon.values,
-                                                       dd.lat.values,
-                                                       dd.values,
-                                                       Lon,
-                                                       Lat,p)
+        # try:
+        dd = dd[1].dropna('point', how='all')
+        ds_interp = Inverse_weighted_interpolation(dd.lon.values,
+                                                   dd.lat.values,
+                                                   dd.values,
+                                                   Lon,
+                                                   Lat,p)
 
-            ds_interp = xr.DataArray(np.array(ds_interp).reshape(out_shape), dims=['lat', 'lon'],
-                                     coords={'lon':lon,
-                                             'lat':lat})
-        except:
-            ds_interp=None
+        ds_interp = xr.DataArray(np.array(ds_interp).reshape(out_shape), dims=['lat', 'lon'],
+                                 coords={'lon':lon,
+                                         'lat':lat})
+        # except:
+        #     ds_interp=None
         return ds_interp
 
-    list_interped = Parallel(n_jobs=50, prefer='processes')(delayed(interp_idw)(dd,Lon,Lat, out_shape,lat,lon,p) for dd in tqdm(ds_group))
+    list_interped = Parallel(n_jobs=6, prefer='processes')(delayed(interp_idw)(dd,Lon,Lat, out_shape,lat,lon,p) for dd in tqdm(ds_group))
     list_interped = [d for d in list_interped if d is not None]
     print('concat interp')
     ds_interp_grid = xr.concat(list_interped, dim='time')

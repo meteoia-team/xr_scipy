@@ -252,7 +252,10 @@ def xr_idx_interp(ds_y_for_spline, lon, lat,p=2):
 
     def interp_idw(dd,Lon,Lat, out_shape,lat,lon,p):
         # try:
-        dd = dd[1].dropna('point', how='all')
+        if 'points' in dd[1].dims:
+            dd = dd[1].dropna('point', how='all')
+        if 'sta_id' in dd[1].dims:
+            dd = dd[1].dropna('sta_id', how='all')
         ds_interp = Inverse_weighted_interpolation(dd.lon.values,
                                                    dd.lat.values,
                                                    dd.values,
@@ -266,7 +269,7 @@ def xr_idx_interp(ds_y_for_spline, lon, lat,p=2):
         #     ds_interp=None
         return ds_interp
 
-    list_interped = Parallel(n_jobs=6, prefer='processes')(delayed(interp_idw)(dd,Lon,Lat, out_shape,lat,lon,p) for dd in tqdm(ds_group))
+    list_interped = Parallel(n_jobs=40, prefer='processes')(delayed(interp_idw)(dd,Lon,Lat, out_shape,lat,lon,p) for dd in tqdm(ds_group))
     list_interped = [d for d in list_interped if d is not None]
     print('concat interp')
     ds_interp_grid = xr.concat(list_interped, dim='time')
